@@ -6,7 +6,6 @@ import chalk from 'chalk';
 import dateFormat from 'dateformat';
 import gql from 'graphql-tag';
 import { uniqBy } from 'lodash';
-import ora from 'ora';
 
 import { graphqlClient, withErrorHandlingAsync } from '../../graphql/client';
 import {
@@ -20,6 +19,7 @@ import {
 } from '../../graphql/generated';
 import { PublishMutation } from '../../graphql/mutations/PublishMutation';
 import Log from '../../log';
+import { ora } from '../../ora';
 import { findProjectRootAsync, getProjectIdAsync } from '../../project/projectUtils';
 import {
   PublishPlatform,

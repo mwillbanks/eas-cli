@@ -2,7 +2,6 @@ import { getConfig } from '@expo/config';
 import { Command } from '@oclif/command';
 import chalk from 'chalk';
 import gql from 'graphql-tag';
-import ora from 'ora';
 
 import { appPlatformEmojis } from '../../build/constants';
 import { graphqlClient, withErrorHandlingAsync } from '../../graphql/client';
@@ -14,6 +13,7 @@ import {
 } from '../../graphql/generated';
 import { BuildQuery } from '../../graphql/queries/BuildQuery';
 import Log from '../../log';
+import { ora } from '../../ora';
 import {
   findProjectRootAsync,
   getProjectFullNameAsync,

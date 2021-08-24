@@ -1,11 +1,11 @@
 import { getConfig } from '@expo/config';
 import { Command, flags } from '@oclif/command';
-import ora from 'ora';
 
 import { formatGraphQLBuild } from '../../build/utils/formatBuild';
 import { BuildFragment } from '../../graphql/generated';
 import { BuildQuery } from '../../graphql/queries/BuildQuery';
 import Log from '../../log';
+import { ora } from '../../ora';
 import {
   findProjectRootAsync,
   getProjectFullNameAsync,

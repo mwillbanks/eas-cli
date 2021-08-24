@@ -3,12 +3,12 @@ import { Command } from '@oclif/command';
 import assert from 'assert';
 import chalk from 'chalk';
 import nullthrows from 'nullthrows';
-import ora from 'ora';
 
 import { WebhookFragment } from '../../graphql/generated';
 import { WebhookMutation } from '../../graphql/mutations/WebhookMutation';
 import { WebhookQuery } from '../../graphql/queries/WebhookQuery';
 import Log from '../../log';
+import { ora } from '../../ora';
 import { findProjectRootAsync, getProjectIdAsync } from '../../project/projectUtils';
 import { promptAsync, toggleConfirmAsync } from '../../prompts';
 import { ensureLoggedInAsync } from '../../user/actions';

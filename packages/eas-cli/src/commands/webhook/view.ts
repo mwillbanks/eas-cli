@@ -1,8 +1,8 @@
 import { Command } from '@oclif/command';
-import ora from 'ora';
 
 import { WebhookQuery } from '../../graphql/queries/WebhookQuery';
 import Log from '../../log';
+import { ora } from '../../ora';
 import { ensureLoggedInAsync } from '../../user/actions';
 import { formatWebhook } from '../../webhooks/formatWebhook';
 

@@ -1,10 +1,10 @@
 import { getConfig } from '@expo/config';
 import chalk from 'chalk';
-import ora from 'ora';
 
 import { getExpoWebsiteBaseUrl } from '../api';
 import { AppPlatform, SubmissionFragment, SubmissionStatus } from '../graphql/generated';
 import Log from '../log';
+import { ora } from '../ora';
 import { getProjectAccountNameAsync } from '../project/projectUtils';
 import { sleep } from '../utils/promise';
 import SubmissionService, {

@@ -1,8 +1,8 @@
 import assert from 'assert';
 import { nanoid } from 'nanoid';
-import ora from 'ora';
 
 import { AndroidAppBuildCredentialsFragment } from '../../../graphql/generated';
+import { ora } from '../../../ora';
 import { getApplicationIdAsync } from '../../../project/android/applicationId';
 import { getProjectAccountName, getProjectConfigDescription } from '../../../project/projectUtils';
 import { promptAsync } from '../../../prompts';
