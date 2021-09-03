@@ -72,7 +72,7 @@ class AndroidSubmitCommand {
   private async maybeGetAndroidPackageFromCurrentProjectAsync(): Promise<string | undefined> {
     const { exp } = getConfig(this.ctx.projectDir, { skipSDKVersionRequirement: true });
     try {
-      return await getApplicationIdAsync(this.ctx.projectDir, exp);
+      return await getApplicationIdAsync(this.ctx.projectDir, exp, {});
     } catch {
       return undefined;
     }

@@ -1,50 +1,39 @@
 import { ExpoConfig } from '@expo/config';
 import { AndroidConfig } from '@expo/config-plugins';
 import { Platform, Workflow } from '@expo/eas-build-job';
+import { BuildProfile } from '@expo/eas-json';
 import fs from 'fs-extra';
 
 import { resolveWorkflowAsync } from '../../project/workflow';
 
-export async function readVersionCodeAsync(
+export async function maybeResolveVersionsAsync(
   projectDir: string,
-  exp: ExpoConfig
-): Promise<number | undefined> {
+  exp: ExpoConfig,
+  buildProfile: BuildProfile<Platform.ANDROID>
+): Promise<{ appVersion?: string; appBuildVersion?: string }> {
   const workflow = await resolveWorkflowAsync(projectDir, Platform.ANDROID);
   if (workflow === Workflow.GENERIC) {
-    const buildGradle = readBuildGradle(projectDir);
-    const matchResult = buildGradle?.match(/versionCode (.*)/);
-    if (matchResult) {
-      return Number(matchResult[1]);
-    } else {
-      return undefined;
-    }
-  } else {
-    return AndroidConfig.Version.getVersionCode(exp) ?? 1;
-  }
-}
+    const buildGradle = await AndroidConfig.BuildGradle.getAppBuildGradleAsync(projectDir);
+    const parsedGradleCommand = buildProfile.gradleCommand
+      ? AndroidConfig.BuildGradle.parseGradleCommand(buildProfile.gradleCommand, buildGradle)
+      : undefined;
 
-export async function readVersionNameAsync(
-  projectDir: string,
-  exp: ExpoConfig
-): Promise<string | undefined> {
-  const workflow = await resolveWorkflowAsync(projectDir, Platform.ANDROID);
-  if (workflow === Workflow.GENERIC) {
-    const buildGradle = readBuildGradle(projectDir);
-    const matchResult = buildGradle?.match(/versionName ["'](.*)["']/);
-    if (matchResult) {
-      return matchResult[1];
-    } else {
-      return undefined;
-    }
+    return {
+      appVersion: AndroidConfig.BuildGradle.resolveConfigValue(
+        buildGradle,
+        parsedGradleCommand?.flavor,
+        'versionName'
+      ),
+      appBuildVersion: AndroidConfig.BuildGradle.resolveConfigValue(
+        buildGradle,
+        parsedGradleCommand?.flavor,
+        'versionCode'
+      ),
+    };
   } else {
-    return exp.version;
+    return {
+      appBuildVersion: String(AndroidConfig.Version.getVersionCode(exp) ?? 1),
+      appVersion: exp.version,
+    };
   }
-}
-
-function readBuildGradle(projectDir: string): string | undefined {
-  const buildGradlePath = AndroidConfig.Paths.getAppBuildGradleFilePath(projectDir);
-  if (!fs.pathExistsSync(buildGradlePath)) {
-    return undefined;
-  }
-  return fs.readFileSync(buildGradlePath, 'utf8');
 }

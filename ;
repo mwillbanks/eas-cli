@@ -25,7 +25,7 @@ import { Platform } from '../types';
 import { logCredentialsSource } from '../utils/credentials';
 import { checkGoogleServicesFileAsync, checkNodeEnvVariable } from '../validate';
 import { validateAndSyncProjectConfigurationAsync } from './configure';
-import { GradleBuildContext, resolveGradleBuildContextAsync } from './gradle';
+import { resolveGradleBuildContextAsync } from './gradle';
 import { transformJob } from './graphql';
 import { prepareJobAsync } from './prepareJob';
 
@@ -53,7 +53,7 @@ This means that it will most likely produce an AAB and you will not be able to i
   checkNodeEnvVariable(ctx);
   await checkGoogleServicesFileAsync(ctx);
 
-  const gradleContext = await resolveGradleBuildContextAsync(ctx.projectDir, buildProfile);
+  const gradleCtx = resolveGradleBuildContextAsync(ctx.projectDir, buildProfile);
 
   if (ctx.workflow === Workflow.MANAGED) {
     await ensureApplicationIdIsDefinedForManagedProjectAsync(ctx.projectDir, ctx.exp);
@@ -61,17 +61,13 @@ This means that it will most likely produce an AAB and you will not be able to i
 
   return await prepareBuildRequestForPlatformAsync({
     ctx,
-    ensureCredentialsAsync: async (ctx: BuildContext<Platform.ANDROID>) => {
-      return await ensureAndroidCredentialsAsync(ctx, gradleContext);
-    },
+    ensureCredentialsAsync: ensureAndroidCredentialsAsync,
     ensureProjectConfiguredAsync: async () => {
       if (ctx.workflow === Workflow.GENERIC) {
         await validateAndSyncProjectConfigurationAsync(ctx.projectDir, ctx.exp);
       }
     },
-    getMetadataContext: () => ({
-      gradleContext,
-    }),
+    getMetadataContext: () => ({}),
     prepareJobAsync,
     sendBuildRequestAsync: async (
       appId: string,
@@ -94,17 +90,12 @@ function shouldProvideCredentials(ctx: BuildContext<Platform.ANDROID>): boolean 
 }
 
 async function ensureAndroidCredentialsAsync(
-  ctx: BuildContext<Platform.ANDROID>,
-  gradleContext: GradleBuildContext
+  ctx: BuildContext<Platform.ANDROID>
 ): Promise<CredentialsResult<AndroidCredentials> | undefined> {
   if (!shouldProvideCredentials(ctx)) {
     return;
   }
-  const androidApplicationIdentifier = await getApplicationIdAsync(
-    ctx.projectDir,
-    ctx.exp,
-    gradleContext
-  );
+  const androidApplicationIdentifier = await getApplicationIdAsync(ctx.projectDir, ctx.exp);
   const provider = new AndroidCredentialsProvider(
     await createCredentialsContextAsync(ctx.projectDir, {
       exp: ctx.exp,

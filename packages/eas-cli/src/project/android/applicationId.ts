@@ -23,28 +23,48 @@ export async function ensureApplicationIdIsDefinedForManagedProjectAsync(
   assert(workflow === Workflow.MANAGED, 'This function should be called only for managed projects');
 
   try {
-    return await getApplicationIdAsync(projectDir, exp);
+    return await getApplicationIdAsync(projectDir, exp, {});
   } catch (err) {
     return await configureApplicationIdAsync(projectDir, exp);
   }
 }
 
-export async function getApplicationIdAsync(projectDir: string, exp: ExpoConfig): Promise<string> {
+export async function getApplicationIdAsync(
+  projectDir: string,
+  exp: ExpoConfig,
+  { moduleName, flavor }: { moduleName?: string; flavor?: string }
+): Promise<string> {
   const workflow = await resolveWorkflowAsync(projectDir, Platform.ANDROID);
   if (workflow === Workflow.GENERIC) {
     warnIfAndroidPackageDefinedInAppConfigForGenericProject(projectDir, exp);
 
     const errorMessage = 'Could not read application id from Android project.';
-    let buildGradlePath = null;
     try {
-      buildGradlePath = AndroidConfig.Paths.getAppBuildGradleFilePath(projectDir);
-    } catch {}
-    if (!buildGradlePath || !fs.pathExistsSync(buildGradlePath)) {
-      throw new Error(errorMessage);
+      const buildGradle = await AndroidConfig.BuildGradle.getAppBuildGradleAsync(projectDir);
+      const applicationId = AndroidConfig.BuildGradle.resolveConfigValue(
+        buildGradle,
+        flavor ?? undefined,
+        'applicationId'
+      );
+      return nullthrows(applicationId, errorMessage);
+    } catch (err: any) {
+      // fallback to best effort approach, this logic can be dropped when we start supporting
+      // modules diffrent than 'app' and 'flavorDimensions'
+      let buildGradlePath = null;
+      try {
+        buildGradlePath = AndroidConfig.Paths.getAppBuildGradleFilePath(projectDir);
+      } catch {}
+      if (!buildGradlePath || !fs.pathExistsSync(buildGradlePath)) {
+        throw new Error(errorMessage);
+      }
+      const buildGradle = fs.readFileSync(buildGradlePath, 'utf8');
+      const matchResult = buildGradle.match(/applicationId ['"](.*)['"]/);
+      const applicationId = nullthrows(matchResult?.[1], errorMessage);
+
+      Log.warn(`Unable to parse build app/build.gradle: ${err.message}`);
+      Log.warn(`Continuing with best effort detection, detected applicationId ${applicationId}`);
+      return applicationId;
     }
-    const buildGradle = fs.readFileSync(buildGradlePath, 'utf8');
-    const matchResult = buildGradle.match(/applicationId ['"](.*)['"]/);
-    return nullthrows(matchResult?.[1], errorMessage);
   } else {
     const applicationId = AndroidConfig.Package.getPackage(exp);
     if (!applicationId || !isApplicationIdValid(applicationId)) {
